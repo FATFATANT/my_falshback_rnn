@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="cfd0d15c-c46c-4984-9d14-5b3dd3caa916" name="czy2021@10.12.49.190:22 key (project level)">
+        <fileTransfer accessType="SFTP" host="10.12.49.190" port="22" sshConfigId="3dff4838-6a36-418e-9126-20d16d640319" sshConfig="czy2021@10.12.49.190:22 key" keyPair="true" />
+      </webServer>
+    </option>
+  </component>
+</project>
