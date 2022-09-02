@@ -55,7 +55,7 @@ class Setting:
         # data management
         self.dataset_file = './data/{}'.format(args.dataset)
         self.max_users = 0  # 0 = use all available users
-        self.sequence_length = 20  # todo 不清楚这个sequence_length具体指啥
+        self.sequence_length = 20  # todo 这个参数指flashback的长度
         self.batch_size = args.batch_size
         self.min_checkins = 101
 

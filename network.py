@@ -87,12 +87,12 @@ class Flashback(nn.Module):
                 sum_w += w_j  # 权重累加用于最后归一化
                 out_w[i] += w_j * out[j]  # 给RNN在序列中每一步的输出转变为从当前步回溯到第一步的各个输出结果的加权和
             # normalize according to weights
-            out_w[i] /= sum_w
+            out_w[i] /= sum_w  # 两个tensor相除是按元素除，这个sum_w依次计算200个用户的1步回溯、2步回溯、3步...，有几步就把几步的权重累加最后一除归一化
 
         # add user embedding:
-        p_u = self.user_encoder(active_user)  # (1, 200, 10)
-        p_u = p_u.view(user_len, self.hidden_size)  # (200, 10)
-        out_pu = torch.zeros(seq_len, user_len, 2 * self.hidden_size, device=x.device)
+        p_u = self.user_encoder(active_user)  # (1, 200, 10)  对应的用户向量
+        p_u = p_u.view(user_len, self.hidden_size)  # (200, 10)  去掉长度为1的batch_size
+        out_pu = torch.zeros(seq_len, user_len, 2 * self.hidden_size, device=x.device)  # 相当于个空数组，用于组装地点embedding和用户embedding
         for i in range(seq_len):
             out_pu[i] = torch.cat([out_w[i], p_u], dim=1)  # todo 应是指每个序列都要加上一份同样的用户embedding
         y_linear = self.fc(out_pu)  # (20, 200, 106994)

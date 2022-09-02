@@ -31,9 +31,9 @@ def main():
 
     """### create flashback trainer ###"""
     trainer = FlashbackTrainer(setting.lambda_t, setting.lambda_s)
-    h0_strategy = create_h0_strategy(setting.hidden_dim, setting.is_lstm)
+    h0_strategy = create_h0_strategy(setting.hidden_dim, setting.is_lstm)  # 初始化h0
     trainer.prepare(poi_loader.locations(), poi_loader.user_count(), setting.hidden_dim, setting.rnn_factory,
-                    setting.device)
+                    setting.device)  # trainer中包括了损失函数，模型等内容
     evaluation_test = Evaluation(dataset_test, dataloader_test, poi_loader.user_count(), h0_strategy, trainer, setting)
     print('{} {}'.format(trainer, setting.rnn_factory))
 

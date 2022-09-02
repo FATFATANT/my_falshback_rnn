@@ -54,7 +54,7 @@ class PoiDataset(Dataset):
         self.next_user_idx = 0  # current user index to add
         self.active_users = []  # current active users，初始化为200个1
         self.active_user_seq = []  # current active users sequences，初始化为200个0
-        self.user_permutation = []  # shuffle users during training，初始化为
+        self.user_permutation = []  # shuffle users during training，从0到最后一个用户的编号
 
         # set active users:
         for i in range(self.batch_size):
@@ -75,7 +75,7 @@ class PoiDataset(Dataset):
         for i in range(self.batch_size):
             self.next_user_idx = (self.next_user_idx + 1) % len(self.users)  # todo 这个取余没看懂，感觉不需要
             self.active_users.append(self.user_permutation[i])  # todo 费这个劲一个个加进去干啥？直接切片前200不行吗？
-            self.active_user_seq.append(0)  # 一堆0
+            self.active_user_seq.append(0)  # todo 一堆0，我猜想好像是用来记录某个用户被使用的次数
 
     def __init__(self, users, times, coords, locs, sequence_length, batch_size, split, usage, loc_count,
                  custom_seq_count):
@@ -221,34 +221,34 @@ class PoiDataset(Dataset):
         lbls = []
         lbl_times = []
         lbl_coords = []
-        reset_h = []
+        reset_h = []  # todo
         for i in range(self.batch_size):
-            i_user = self.active_users[i]  # shuffle后的随机200个用户取出第i个
-            j = self.active_user_seq[i]
+            i_user = self.active_users[i]  # shuffle后的随机200个用户取出第i个，注意shuffle在dataloader之前，所以这里是会把用户的每条序列都遍历的
+            j = self.active_user_seq[i]  # todo 注意这个j用法
             max_j = self.sequences_count[i_user]  # 该用户的总序列数
             if self.usage == Usage.MIN_SEQ_LENGTH:
                 max_j = self.min_seq_count
             if self.usage == Usage.CUSTOM:
                 max_j = min(max_j, self.custom_seq_count)  # use either the users maxima count or limit by custom count
-            if j >= max_j:
+            if j >= max_j:  # todo 用户没有第j条序列，就取下一个用户的第0条序列
                 # replace this user in current sequence:
                 i_user = self.user_permutation[self.next_user_idx]
                 j = 0
                 self.active_users[i] = i_user
                 self.active_user_seq[i] = j
                 self.next_user_idx = (self.next_user_idx + 1) % len(self.users)
-                while self.user_permutation[self.next_user_idx] in self.active_users:
+                while self.user_permutation[self.next_user_idx] in self.active_users:  # todo 感觉应该是重不了的，不清楚这个循环
                     self.next_user_idx = (self.next_user_idx + 1) % len(self.users)
                 # TODO: throw exception if wrapped around!
             # use this user:
-            reset_h.append(j == 0)
-            seqs.append(torch.tensor(self.sequences[i_user][j]))  # 下面这些都是找出对应用户的第j条序列并保存
+            reset_h.append(j == 0)  # 如果是同一个用户的，上一段序列的h还能接着用，如果是取了下一个用户，那就要初始化h了
+            seqs.append(torch.tensor(self.sequences[i_user][j]))  # 下面这些都是找出对应用户的第j条序列并保存，注意一条序列有20项
             times.append(torch.tensor(self.sequences_times[i_user][j]))
             coords.append(torch.tensor(self.sequences_coords[i_user][j]))
             lbls.append(torch.tensor(self.sequences_labels[i_user][j]))
             lbl_times.append(torch.tensor(self.sequences_lbl_times[i_user][j]))
             lbl_coords.append(torch.tensor(self.sequences_lbl_coords[i_user][j]))
-            self.active_user_seq[i] += 1  # 这原本是个全0的数组，对应项+1变成1
+            self.active_user_seq[i] += 1  # 每次迭代都不断累加
 
         x = torch.stack(seqs, dim=1)  # 按这种叠法就是相当于每一列是一条序列，有200列
         t = torch.stack(times, dim=1)
